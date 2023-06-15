@@ -126,5 +126,33 @@ func (t *TODOHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+	case "DELETE":
+		todoReq := &model.DeleteTODORequest{}
+		todoRes := &model.DeleteTODOResponse{}
+		if err := json.NewDecoder(r.Body).Decode(todoReq); err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		if len(todoReq.IDs) == 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		err := t.svc.DeleteTODO(r.Context(), todoReq.IDs)
+		if errors.Is(err, &model.ErrNotFound{}) {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		if err := json.NewEncoder(w).Encode(todoRes); err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 }
