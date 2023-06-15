@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/TechBowl-japan/go-stations/model"
 	"github.com/TechBowl-japan/go-stations/service"
@@ -96,6 +97,28 @@ func (t *TODOHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		todoRes.TODO = *todo
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		if err := json.NewEncoder(w).Encode(todoRes); err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	case "GET":
+		todoReq := &model.ReadTODORequest{}
+		todoRes := &model.ReadTODOResponse{}
+		todoReq.PrevID, _ = strconv.ParseInt(r.URL.Query().Get("prev_id"), 10, 64)
+		todoReq.Size, _ = strconv.ParseInt(r.URL.Query().Get("size"), 10, 64)
+		//log.Println(todoReq)
+		if todoReq.Size == 0 {
+			todoReq.Size = 5
+		}
+		todos, err := t.svc.ReadTODO(r.Context(), todoReq.PrevID, todoReq.Size)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		todoRes.TODOs = todos
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		if err := json.NewEncoder(w).Encode(todoRes); err != nil {
