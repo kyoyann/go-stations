@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
@@ -47,9 +48,10 @@ func (h *TODOHandler) Delete(ctx context.Context, req *model.DeleteTODORequest) 
 }
 
 func (t *TODOHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	todoRes := &model.CreateTODOResponse{}
-	todoReq := &model.CreateTODORequest{}
-	if r.Method == "POST" {
+	switch r.Method {
+	case "POST":
+		todoReq := &model.CreateTODORequest{}
+		todoRes := &model.CreateTODOResponse{}
 		if err := json.NewDecoder(r.Body).Decode(todoReq); err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -60,6 +62,35 @@ func (t *TODOHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		todo, err := t.svc.CreateTODO(r.Context(), todoReq.Subject, todoReq.Description)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		todoRes.TODO = *todo
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		if err := json.NewEncoder(w).Encode(todoRes); err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	case "PUT":
+		todoReq := &model.UpdateTODORequest{}
+		todoRes := &model.UpdateTODOResponse{}
+		if err := json.NewDecoder(r.Body).Decode(todoReq); err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		if todoReq.Subject == "" || todoReq.ID == 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		todo, err := t.svc.UpdateTODO(r.Context(), todoReq.ID, todoReq.Subject, todoReq.Description)
+		if errors.Is(err, &model.ErrNotFound{}) {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
