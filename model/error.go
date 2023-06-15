@@ -4,5 +4,5 @@ type ErrNotFound struct {
 }
 
 func (e *ErrNotFound) Error() string {
-	return ""
+	return "record not found"
 }
