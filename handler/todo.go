@@ -26,68 +26,65 @@ func NewTODOHandler(svc *service.TODOService) *TODOHandler {
 
 // Create handles the endpoint that creates the TODO.
 func (h *TODOHandler) Create(ctx context.Context, req *model.CreateTODORequest) (*model.CreateTODOResponse, error) {
-	_, _ = h.svc.CreateTODO(ctx, "", "")
-	return &model.CreateTODOResponse{}, nil
+	todo, err := h.svc.CreateTODO(ctx, req.Subject, req.Description)
+	return &model.CreateTODOResponse{TODO: *todo}, err
 }
 
 // Read handles the endpoint that reads the TODOs.
 func (h *TODOHandler) Read(ctx context.Context, req *model.ReadTODORequest) (*model.ReadTODOResponse, error) {
-	_, _ = h.svc.ReadTODO(ctx, 0, 0)
-	return &model.ReadTODOResponse{}, nil
+	todos, err := h.svc.ReadTODO(ctx, req.PrevID, req.Size)
+	return &model.ReadTODOResponse{TODOs: todos}, err
 }
 
 // Update handles the endpoint that updates the TODO.
 func (h *TODOHandler) Update(ctx context.Context, req *model.UpdateTODORequest) (*model.UpdateTODOResponse, error) {
-	_, _ = h.svc.UpdateTODO(ctx, 0, "", "")
-	return &model.UpdateTODOResponse{}, nil
+	todo, err := h.svc.UpdateTODO(ctx, req.ID, req.Subject, req.Description)
+	return &model.UpdateTODOResponse{TODO: *todo}, err
 }
 
 // Delete handles the endpoint that deletes the TODOs.
 func (h *TODOHandler) Delete(ctx context.Context, req *model.DeleteTODORequest) (*model.DeleteTODOResponse, error) {
-	_ = h.svc.DeleteTODO(ctx, nil)
-	return &model.DeleteTODOResponse{}, nil
+	err := h.svc.DeleteTODO(ctx, req.IDs)
+	return &model.DeleteTODOResponse{}, err
 }
 
 func (t *TODOHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
-		todoReq := &model.CreateTODORequest{}
-		todoRes := &model.CreateTODOResponse{}
-		if err := json.NewDecoder(r.Body).Decode(todoReq); err != nil {
+		req := &model.CreateTODORequest{}
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		if todoReq.Subject == "" {
+		if req.Subject == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		todo, err := t.svc.CreateTODO(r.Context(), todoReq.Subject, todoReq.Description)
+		res, err := t.Create(r.Context(), req)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		todoRes.TODO = *todo
-		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if err := json.NewEncoder(w).Encode(todoRes); err != nil {
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(res); err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 	case "PUT":
-		todoReq := &model.UpdateTODORequest{}
-		todoRes := &model.UpdateTODOResponse{}
-		if err := json.NewDecoder(r.Body).Decode(todoReq); err != nil {
+		req := &model.UpdateTODORequest{}
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		if todoReq.Subject == "" || todoReq.ID == 0 {
+		if req.Subject == "" || req.ID == 0 {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		todo, err := t.svc.UpdateTODO(r.Context(), todoReq.ID, todoReq.Subject, todoReq.Description)
+		res, err := t.Update(r.Context(), req)
 		if errors.Is(err, &model.ErrNotFound{}) {
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -96,49 +93,46 @@ func (t *TODOHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		todoRes.TODO = *todo
-		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if err := json.NewEncoder(w).Encode(todoRes); err != nil {
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(res); err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 	case "GET":
-		todoReq := &model.ReadTODORequest{}
-		todoRes := &model.ReadTODOResponse{}
-		todoReq.PrevID, _ = strconv.ParseInt(r.URL.Query().Get("prev_id"), 10, 64)
-		todoReq.Size, _ = strconv.ParseInt(r.URL.Query().Get("size"), 10, 64)
-		//log.Println(todoReq)
-		if todoReq.Size == 0 {
-			todoReq.Size = 5
+		req := &model.ReadTODORequest{}
+		req.PrevID, _ = strconv.ParseInt(r.URL.Query().Get("prev_id"), 10, 64)
+		req.Size, _ = strconv.ParseInt(r.URL.Query().Get("size"), 10, 64)
+		//デフォルト値を設定
+		if req.Size == 0 {
+			req.Size = 5
 		}
-		todos, err := t.svc.ReadTODO(r.Context(), todoReq.PrevID, todoReq.Size)
+
+		res, err := t.Read(r.Context(), req)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		todoRes.TODOs = todos
-		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if err := json.NewEncoder(w).Encode(todoRes); err != nil {
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(res); err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 	case "DELETE":
-		todoReq := &model.DeleteTODORequest{}
-		todoRes := &model.DeleteTODOResponse{}
-		if err := json.NewDecoder(r.Body).Decode(todoReq); err != nil {
+		req := &model.DeleteTODORequest{}
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		if len(todoReq.IDs) == 0 {
+		if len(req.IDs) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		err := t.svc.DeleteTODO(r.Context(), todoReq.IDs)
+		res, err := t.Delete(r.Context(), req)
 		if errors.Is(err, &model.ErrNotFound{}) {
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -147,9 +141,9 @@ func (t *TODOHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if err := json.NewEncoder(w).Encode(todoRes); err != nil {
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(res); err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return

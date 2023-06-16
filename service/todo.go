@@ -30,12 +30,14 @@ func (s *TODOService) CreateTODO(ctx context.Context, subject, description strin
 	)
 	result, err := s.db.ExecContext(ctx, insert, subject, description)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 	id, _ := result.LastInsertId()
 	todo := model.TODO{}
 
 	if err = s.db.QueryRowContext(ctx, confirm, id).Scan(&todo.ID, &todo.Subject, &todo.Description, &todo.CreatedAt, &todo.UpdatedAt); err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
@@ -57,6 +59,7 @@ func (s *TODOService) ReadTODO(ctx context.Context, prevID, size int64) ([]*mode
 		rows, err = s.db.QueryContext(ctx, readWithID, prevID, size)
 	}
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -79,6 +82,7 @@ func (s *TODOService) UpdateTODO(ctx context.Context, id int64, subject, descrip
 	)
 	result, err := s.db.ExecContext(ctx, update, subject, description, id)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 	if rows, _ := result.RowsAffected(); rows == 0 {
@@ -88,6 +92,7 @@ func (s *TODOService) UpdateTODO(ctx context.Context, id int64, subject, descrip
 	todo := model.TODO{}
 
 	if err = s.db.QueryRowContext(ctx, confirm, id).Scan(&todo.ID, &todo.Subject, &todo.Description, &todo.CreatedAt, &todo.UpdatedAt); err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
@@ -107,6 +112,7 @@ func (s *TODOService) DeleteTODO(ctx context.Context, ids []int64) error {
 	}
 	result, err := s.db.ExecContext(ctx, deleteFmt, arg...)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	if rows, _ := result.RowsAffected(); rows == 0 {
