@@ -101,9 +101,26 @@ func (t *TODOHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	case "GET":
-		req := &model.ReadTODORequest{}
-		req.PrevID, _ = strconv.ParseInt(r.URL.Query().Get("prev_id"), 10, 64)
-		req.Size, _ = strconv.ParseInt(r.URL.Query().Get("size"), 10, 64)
+		req := &model.ReadTODORequest{PrevID: 0, Size: 5}
+		pid := r.URL.Query().Get("prev_id")
+		size := r.URL.Query().Get("size")
+		var err error
+		if pid != "" {
+			req.PrevID, err = strconv.ParseInt(pid, 10, 64)
+			if err != nil {
+				log.Println(err)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		}
+		if size != "" {
+			req.Size, err = strconv.ParseInt(size, 10, 64)
+			if err != nil {
+				log.Println(err)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		}
 		//デフォルト値を設定
 		if req.Size == 0 {
 			req.Size = 5
