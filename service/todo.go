@@ -23,6 +23,7 @@ func NewTODOService(db *sql.DB) *TODOService {
 }
 
 // CreateTODO creates a TODO on DB.
+//エラーの場合に*model.TODOにnilを設定するとpanicが発生する。UpdateTODOResponseのTODOにメモリを格納しており、ぬるぽが起きる
 func (s *TODOService) CreateTODO(ctx context.Context, subject, description string) (*model.TODO, error) {
 	const (
 		insert  = `INSERT INTO todos(subject, description) VALUES(?, ?)`
@@ -31,18 +32,18 @@ func (s *TODOService) CreateTODO(ctx context.Context, subject, description strin
 	result, err := s.db.ExecContext(ctx, insert, subject, description)
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return &model.TODO{}, err
 	}
 	id, err := result.LastInsertId()
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return &model.TODO{}, err
 	}
 	todo := model.TODO{}
 
 	if err = s.db.QueryRowContext(ctx, confirm, id).Scan(&todo.ID, &todo.Subject, &todo.Description, &todo.CreatedAt, &todo.UpdatedAt); err != nil {
 		log.Println(err)
-		return nil, err
+		return &model.TODO{}, err
 	}
 
 	return &todo, nil
@@ -75,10 +76,15 @@ func (s *TODOService) ReadTODO(ctx context.Context, prevID, size int64) ([]*mode
 		}
 		todos = append(todos, &todo)
 	}
+	if err = rows.Err(); err != nil {
+		log.Println(err)
+		return nil, err
+	}
 	return todos, nil
 }
 
 // UpdateTODO updates the TODO on DB.
+//エラーの場合に*model.TODOにnilを設定するとpanicが発生する。UpdateTODOResponseのTODOにメモリを格納しており、ぬるぽが起きる
 func (s *TODOService) UpdateTODO(ctx context.Context, id int64, subject, description string) (*model.TODO, error) {
 	const (
 		update  = `UPDATE todos SET subject = ?, description = ? WHERE id = ?`
@@ -87,21 +93,21 @@ func (s *TODOService) UpdateTODO(ctx context.Context, id int64, subject, descrip
 	result, err := s.db.ExecContext(ctx, update, subject, description, id)
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return &model.TODO{}, err
 	}
 	rows, err := result.RowsAffected()
 	if err != nil {
-		return nil, err
+		return &model.TODO{}, err
 	}
 	if rows == 0 {
-		return nil, &model.ErrNotFound{}
+		return &model.TODO{}, &model.ErrNotFound{}
 	}
 
 	todo := model.TODO{}
 
 	if err = s.db.QueryRowContext(ctx, confirm, id).Scan(&todo.ID, &todo.Subject, &todo.Description, &todo.CreatedAt, &todo.UpdatedAt); err != nil {
 		log.Println(err)
-		return nil, err
+		return &model.TODO{}, err
 	}
 
 	return &todo, nil
