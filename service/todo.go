@@ -33,7 +33,11 @@ func (s *TODOService) CreateTODO(ctx context.Context, subject, description strin
 		log.Println(err)
 		return nil, err
 	}
-	id, _ := result.LastInsertId()
+	id, err := result.LastInsertId()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 	todo := model.TODO{}
 
 	if err = s.db.QueryRowContext(ctx, confirm, id).Scan(&todo.ID, &todo.Subject, &todo.Description, &todo.CreatedAt, &todo.UpdatedAt); err != nil {
@@ -85,7 +89,11 @@ func (s *TODOService) UpdateTODO(ctx context.Context, id int64, subject, descrip
 		log.Println(err)
 		return nil, err
 	}
-	if rows, _ := result.RowsAffected(); rows == 0 {
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+	if rows == 0 {
 		return nil, &model.ErrNotFound{}
 	}
 
@@ -115,9 +123,12 @@ func (s *TODOService) DeleteTODO(ctx context.Context, ids []int64) error {
 		log.Println(err)
 		return err
 	}
-	if rows, _ := result.RowsAffected(); rows == 0 {
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
 		return &model.ErrNotFound{}
 	}
-
 	return nil
 }

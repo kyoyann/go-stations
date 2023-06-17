@@ -121,10 +121,6 @@ func (t *TODOHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		//デフォルト値を設定
-		if req.Size == 0 {
-			req.Size = 5
-		}
 
 		res, err := t.Read(r.Context(), req)
 		if err != nil {
