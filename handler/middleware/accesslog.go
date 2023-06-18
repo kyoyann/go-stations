@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -31,7 +30,7 @@ func AccessLogger(h http.Handler) http.Handler {
 		if err != nil {
 			log.Println(err)
 		}
-		fmt.Println(string(bytes))
+		log.Println(string(bytes))
 	}
 	return http.HandlerFunc(fn)
 }
