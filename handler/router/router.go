@@ -2,9 +2,12 @@ package router
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/TechBowl-japan/go-stations/handler"
+	"github.com/TechBowl-japan/go-stations/handler/middleware"
 	"github.com/TechBowl-japan/go-stations/service"
 )
 
@@ -18,5 +21,17 @@ func NewRouter(todoDB *sql.DB) *http.ServeMux {
 	todoService := service.NewTODOService(todoDB)
 	todoHandler := handler.NewTODOHandler(todoService)
 	mux.HandleFunc("/todos", todoHandler.ServeHTTP)
+
+	mux.Handle("/do-panic", middleware.Recovery(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		panic("intended panic")
+	})))
+
+	mux.Handle("/useragent", middleware.SetUserAgent(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println(r.Context().Value(middleware.UserAgentKey))
+	})))
+
+	mux.Handle("/accesslog", middleware.SetUserAgent(middleware.AccessLogger(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(time.Second * 3)
+	}))))
 	return mux
 }
