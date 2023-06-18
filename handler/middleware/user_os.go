@@ -9,12 +9,12 @@ import (
 
 type contexKey string
 
-const UserAgentKey contexKey = "UserAgent"
+const UserOSKey contexKey = "UserOS"
 
-func SetUserAgent(h http.Handler) http.Handler {
+func SetUserOS(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		ua := useragent.Parse(r.UserAgent())
-		ctx := context.WithValue(r.Context(), UserAgentKey, ua.OS)
+		ctx := context.WithValue(r.Context(), UserOSKey, ua.OS)
 		h.ServeHTTP(w, r.WithContext(ctx))
 	}
 	return http.HandlerFunc(fn)

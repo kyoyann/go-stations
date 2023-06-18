@@ -24,7 +24,7 @@ func AccessLogger(h http.Handler) http.Handler {
 			Timestamp: start,
 			Latency:   int64(time.Since(start).Milliseconds()),
 			Path:      r.URL.Path,
-			OS:        r.Context().Value(UserAgentKey).(string),
+			OS:        r.Context().Value(UserOSKey).(string),
 		}
 		bytes, err := json.Marshal(al)
 		if err != nil {

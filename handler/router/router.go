@@ -26,11 +26,11 @@ func NewRouter(todoDB *sql.DB) *http.ServeMux {
 		panic("intended panic")
 	})))
 
-	mux.Handle("/useragent", middleware.SetUserAgent(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println(r.Context().Value(middleware.UserAgentKey))
+	mux.Handle("/useros", middleware.SetUserOS(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println(r.Context().Value(middleware.UserOSKey))
 	})))
 
-	mux.Handle("/accesslog", middleware.SetUserAgent(middleware.AccessLogger(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/accesslog", middleware.SetUserOS(middleware.AccessLogger(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(time.Second * 3)
 	}))))
 	return mux
