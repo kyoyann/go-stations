@@ -27,7 +27,11 @@ func NewRouter(todoDB *sql.DB) *http.ServeMux {
 	})))
 
 	mux.Handle("/useros", middleware.SetUserOS(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println(r.Context().Value(middleware.UserOSKey))
+		os, err := middleware.GetUserOS(r.Context())
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		log.Println(os)
 	})))
 
 	mux.Handle("/accesslog", middleware.SetUserOS(middleware.AccessLogger(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

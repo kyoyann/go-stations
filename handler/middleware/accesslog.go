@@ -19,12 +19,12 @@ func AccessLogger(h http.Handler) http.Handler {
 		start := time.Now()
 
 		h.ServeHTTP(w, r)
-
+		os, _ := GetUserOS(r.Context())
 		al := accessLog{
 			Timestamp: start,
 			Latency:   int64(time.Since(start).Milliseconds()),
 			Path:      r.URL.Path,
-			OS:        r.Context().Value(UserOSKey).(string),
+			OS:        os,
 		}
 		bytes, err := json.Marshal(al)
 		if err != nil {
