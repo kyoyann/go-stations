@@ -30,6 +30,7 @@ func NewRouter(todoDB *sql.DB) *http.ServeMux {
 		os, err := middleware.GetUserOS(r.Context())
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 		log.Println(os)
 	})))
