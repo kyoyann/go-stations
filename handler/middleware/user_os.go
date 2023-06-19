@@ -26,7 +26,7 @@ func GetUserOS(ctx context.Context) (string, error) {
 
 	os, ok := v.(string)
 	if !ok {
-		return "", fmt.Errorf("token not found")
+		return "", fmt.Errorf("os not found")
 	}
 
 	return os, nil
