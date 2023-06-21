@@ -38,5 +38,11 @@ func NewRouter(todoDB *sql.DB) *http.ServeMux {
 	mux.Handle("/accesslog", middleware.SetUserOS(middleware.AccessLogger(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(time.Second * 3)
 	}))))
+
+	mux.Handle("/basicauth", middleware.BasicAuth((http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/text")
+		w.Write([]byte("Success"))
+	}))))
 	return mux
 }
