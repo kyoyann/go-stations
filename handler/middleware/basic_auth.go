@@ -6,7 +6,7 @@ import (
 )
 
 func BasicAuth(h http.Handler) http.Handler {
-	cid := os.Getenv("BASIC_AUTH_USER_ID")
+	uid := os.Getenv("BASIC_AUTH_USER_ID")
 	pw := os.Getenv("BASIC_AUTH_PASSWORD")
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		clientID, clientSecret, ok := r.BasicAuth()
@@ -14,7 +14,7 @@ func BasicAuth(h http.Handler) http.Handler {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		if clientID != cid || clientSecret != pw {
+		if clientID != uid || clientSecret != pw {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}

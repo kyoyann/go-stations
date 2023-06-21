@@ -42,7 +42,7 @@ func NewRouter(todoDB *sql.DB) *http.ServeMux {
 	mux.Handle("/basicauth", middleware.BasicAuth((http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/text")
-		w.Write([]byte("Success"))
+		w.Write([]byte("Authenticated"))
 	}))))
 	return mux
 }
