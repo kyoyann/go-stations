@@ -70,7 +70,7 @@ func realMain() error {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		if err := s.Shutdown(ctx); err != nil {
-			log.Fatalln(err)
+			log.Fatalf("failed to shutdonw err=%+v\n", err)
 		}
 	}()
 
@@ -78,6 +78,7 @@ func realMain() error {
 		return err
 	}
 
+	//waitしないとサブゴルーチンでのシャットダウン処理が走る前にプロセスが終了してしまう。
 	wg.Wait()
 	return nil
 }
