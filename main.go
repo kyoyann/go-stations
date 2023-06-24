@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/TechBowl-japan/go-stations/db"
@@ -58,8 +57,7 @@ func realMain() error {
 		Addr:    port,
 		Handler: mux,
 	}
-	//os.Killでトラップするとkillコマンドのシグナルを検知できなかったため、syscall.SIGTERMを利用
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer stop()
 
 	wg := &sync.WaitGroup{}
