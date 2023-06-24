@@ -63,14 +63,18 @@ func realMain() error {
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
-		s.ListenAndServe()
-		wg.Done()
+		defer wg.Done()
+		<-ctx.Done()
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := s.Shutdown(ctx); err != nil {
+			log.Fatalln(err)
+		}
 	}()
-	<-ctx.Done()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	s.Shutdown(ctx)
 
+	if err := s.ListenAndServe(); err != http.ErrServerClosed && err != nil {
+		return err
+	}
 	wg.Wait()
 	return nil
 }

@@ -51,5 +51,12 @@ func NewRouter(todoDB *sql.DB) *http.ServeMux {
 		w.Header().Set("Content-Type", "application/text")
 		w.Write([]byte("Graceful Shutdown"))
 	}))
+
+	mux.Handle("/not-gracefulshutdown", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(time.Second * 10)
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/text")
+		w.Write([]byte("Not Graceful Shutdown"))
+	}))
 	return mux
 }
