@@ -60,8 +60,10 @@ func realMain() error {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer stop()
+
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
+
 	go func() {
 		defer wg.Done()
 		<-ctx.Done()
@@ -75,6 +77,7 @@ func realMain() error {
 	if err := s.ListenAndServe(); err != http.ErrServerClosed && err != nil {
 		return err
 	}
+
 	wg.Wait()
 	return nil
 }
