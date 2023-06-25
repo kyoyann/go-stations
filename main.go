@@ -57,6 +57,7 @@ func realMain() error {
 		Addr:    port,
 		Handler: mux,
 	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer stop()
 
